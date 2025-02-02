@@ -28,10 +28,21 @@ public:
 
 	bool Rewinding = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind")
-	float RewindSpeed = 2.f;
+	float RewindSpeed = 2.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind", Meta = (AllowPrivateAccess))
+	float RecordMaxTime = 30.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind", Meta = (AllowPrivateAccess))
+	float SavePointPerSecond = 60.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Rewind", Meta = (AllowPrivateAccess))
+	bool ShowTimeLine = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Rewind")
+	float RemainingRewindTime = 0.f;
 private:
 	ARewindCharacter* Player;
 
 	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 	
 };

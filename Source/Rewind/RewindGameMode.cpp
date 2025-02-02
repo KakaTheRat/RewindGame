@@ -6,12 +6,13 @@
 
 ARewindGameMode::ARewindGameMode()
 {
-	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ARewindGameMode::StartGlobalRewind()
@@ -32,4 +33,21 @@ void ARewindGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	Player = Cast<ARewindCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+}
+
+void ARewindGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (Rewinding)
+	{
+		RemainingRewindTime = FMath::Clamp<float>(RemainingRewindTime - (DeltaSeconds * RewindSpeed), 0.0f, RecordMaxTime);
+		if (RemainingRewindTime <= 0)
+		{
+			EndGlobalRewind();
+		}
+	}else
+	{
+		RemainingRewindTime = FMath::Clamp<float>(RemainingRewindTime + DeltaSeconds, 0.0f, RecordMaxTime);
+	}
 }

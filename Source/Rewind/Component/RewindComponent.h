@@ -45,26 +45,20 @@ private:
 
 	// Manage the rewind Prossess
 	void Rewind(float DeltaTime);
+	UFUNCTION()
 	void Record(float DeltaTime); //Record Object Transform Linear and Angular physics Velocity
 
 	void DrawTimeLine(); // Draw the save points
 
 	bool Rewinding = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind", Meta = (AllowPrivateAccess))
-	float RecordMaxTime = 30.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind", Meta = (AllowPrivateAccess))
-	float SavePointPerSecond = 60.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Rewind", Meta = (AllowPrivateAccess))
-	bool ShowTimeLine = false;
-
 	TRingBuffer<FSavePoint> SavePoints;
 	FVelocities RewindCurrentVelocities;
 	
-	float NotSaveSince = 0.f; //Time since when there is no new save point
+	float NotSaveSince = 0.f;
 
 	int LastReachedSavePoint = -1; 
-	float RewindCurentTime = 0.f; //Time sice when the rewind havn't reach a save point
+	float RewindCurentTime = 0.f;
 
 	ARewindGameMode* GameMode;
 };

@@ -3,6 +3,7 @@
 
 #include "RewindComponent.h"
 #include "Rewind/RewindGameMode.h"
+#include "TimerManager.h"
 
 
 
@@ -30,8 +31,6 @@ void URewindComponent::BeginPlay()
 	}
 
 	RewindableObject->SetSimulatePhysics(true);
-	ShowTimeLine = true;
-	
 }
 
 void URewindComponent::StartRewind()
@@ -44,6 +43,7 @@ void URewindComponent::StartRewind()
 
 void URewindComponent::StopRewind()
 {
+	if (!Rewinding){return;}
 	RewindableObject->SetPhysicsLinearVelocity(RewindCurrentVelocities.LinearVelocity);
 	RewindableObject->SetPhysicsAngularVelocityInDegrees(RewindCurrentVelocities.AngularVelocity);
 	RewindableObject->SetSimulatePhysics(true);
@@ -69,7 +69,7 @@ void URewindComponent::Rewind(float DeltaTime)
 	}
 	else
 	{
-		float TotalTime = 1.0f / SavePointPerSecond;
+		float TotalTime = 1.0f / GameMode->SavePointPerSecond;
 		Alpha = FMath::Clamp<float>(RewindCurentTime / TotalTime, 0.0f, 1.0f);
 		TargetedIndex = LastReachedSavePoint - 1;
 	}
@@ -103,9 +103,9 @@ void URewindComponent::Rewind(float DeltaTime)
 
 void URewindComponent::Record(float DeltaTime)
 {
-	int MaxRecordPoint = RecordMaxTime * SavePointPerSecond;
+	int MaxRecordPoint = GameMode->RecordMaxTime * GameMode->SavePointPerSecond;
 	if (SavePoints.Num() > MaxRecordPoint){SavePoints.PopFront();}
-	float SaveTime = 1.f/SavePointPerSecond;
+	float SaveTime = 1.f/GameMode->SavePointPerSecond;
 	if (NotSaveSince >= SaveTime)
 	{
 		FTransform Transform = RewindableObject->GetComponentTransform();
@@ -143,7 +143,7 @@ void URewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	if (Rewinding){Rewind(DeltaTime);}
 	else{Record(DeltaTime);}
 
-	if (ShowTimeLine)
+	if (GameMode->ShowTimeLine)
 	{
 		DrawTimeLine();
 	}
