@@ -4,7 +4,7 @@
 #include "RewindComponent.h"
 #include "Rewind/RewindGameMode.h"
 #include "TimerManager.h"
-
+#include "Components/StaticMeshComponent.h"
 
 
 // Sets default values for this component's properties
@@ -26,8 +26,8 @@ void URewindComponent::BeginPlay()
 	GameMode = Cast<ARewindGameMode>(GetWorld()->GetAuthGameMode());
 	if (GameMode)
 	{
-		GameMode->OnGlobalRewindStarted.AddDynamic(this, &ThisClass::URewindComponent::StartRewind);
-		GameMode->OnGlobalRewindEnded.AddDynamic(this, &ThisClass::URewindComponent::StopRewind);
+		GameMode->OnGlobalRewindStarted.AddDynamic(this, &ThisClass::StartRewind);
+		GameMode->OnGlobalRewindEnded.AddDynamic(this, &ThisClass::StopRewind);
 	}
 
 	RewindableObject->SetSimulatePhysics(true);
