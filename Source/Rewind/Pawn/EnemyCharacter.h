@@ -41,7 +41,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	int CurrentSplinePoint = 1;
+	FORCEINLINE int GetCurrentSplinePoint() const {return CurrentSplinePoint;}
+	FORCEINLINE void SetCurrentSplinePoint(const int SplinePoint) {CurrentSplinePoint = SplinePoint;}
+
+	FORCEINLINE FTimerHandle GetTimer() const {return MoveToCheckpointTimerHandle ;}
+
+	void MoveToCheckpoint();
+	void StartNextPointTimer(float Delay);
+	void CancelMoveTo();
 
 
 private:
@@ -59,7 +66,6 @@ private:
 	UStaticMeshComponent* Mag;
 
 	void OnSplinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result);
-	void MoveToCheckpoint();
-
+	int CurrentSplinePoint = 1;
 	FTimerHandle MoveToCheckpointTimerHandle;
 };

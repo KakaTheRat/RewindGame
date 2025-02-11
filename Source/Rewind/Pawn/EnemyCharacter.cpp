@@ -27,7 +27,7 @@ AEnemyCharacter::AEnemyCharacter()
 
 FVector AEnemyCharacter::GetRewindVelocity()
 {
-	return PawnRewindComponent->CurrentSavePoint.Velocity;
+	return PawnRewindComponent->GetCurrentSavePoint().Velocity;
 }
 
 // Called when the game starts or when spawned
@@ -51,7 +51,6 @@ void AEnemyCharacter::BeginPlay()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-
 	
 }
 
@@ -59,38 +58,37 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
 
+void AEnemyCharacter::CancelMoveTo()
+{
+	GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Cancel Move");
+	AI->StopMovement();
 }
 
 void AEnemyCharacter::OnSplinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result)
 {
-	if(CurrentSplinePoint < Spline->GetNumberOfSplinePoints() - 1)
+	if(Result.IsSuccess())
 	{
-		CurrentSplinePoint++;
+		if(CurrentSplinePoint < Spline->GetNumberOfSplinePoints() - 1) {CurrentSplinePoint++;}
+		else {CurrentSplinePoint = 0;}
 	}
-	else
-	{
-		CurrentSplinePoint = 0;
-	}
-	if(Spline->IsClosedLoop())
-	{
-		MoveToCheckpoint();
-	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(MoveToCheckpointTimerHandle, this, &ThisClass::MoveToCheckpoint, 5.0f, false);
-	}
+	if(Spline->IsClosedLoop()) {MoveToCheckpoint();}
+	else {StartNextPointTimer(5.f);}
 }
 
 void AEnemyCharacter::MoveToCheckpoint()
 {
 	AI->MoveToLocation(Spline->GetLocationAtSplinePoint(CurrentSplinePoint,ESplineCoordinateSpace::World));
+}
 
+void AEnemyCharacter::StartNextPointTimer(float Delay)
+{
+	GetWorldTimerManager().SetTimer(MoveToCheckpointTimerHandle, this, &ThisClass::MoveToCheckpoint, Delay, false);
 }

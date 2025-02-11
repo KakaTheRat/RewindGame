@@ -14,6 +14,8 @@ class UCapsuleComponent;
 struct FPawnSavePoint{
 	FVector Velocity;
 	FTransform Transform;
+	float TimerDelay;
+	int CurrentSplinePoint;
 };
 
 
@@ -25,7 +27,8 @@ class REWIND_API UPawnRewindComponent : public UActorComponent
 public:	
 	UPawnRewindComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	FPawnSavePoint CurrentSavePoint;
+	
+	FORCEINLINE FPawnSavePoint GetCurrentSavePoint() {return CurrentSavePoint;}
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,6 +55,7 @@ private:
 	bool Rewinding = false;
 
 	TRingBuffer<FPawnSavePoint> SavePoints;
+	FPawnSavePoint CurrentSavePoint;
 	
 	float NotSaveSince = 0.f;
 	int LastReachedSavePoint = -1; 

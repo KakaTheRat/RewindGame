@@ -47,6 +47,9 @@ void UPawnRewindComponent::StartRewind()
 	{
 		Character->GetCharacterMovement()->SetMovementMode(MOVE_None);
 		CurrentSavePoint.Velocity = Character->GetCharacterMovement()->Velocity;
+		CurrentSavePoint.TimerDelay = Character->GetWorldTimerManager().GetTimerRemaining(Character->GetTimer());
+		CurrentSavePoint.CurrentSplinePoint = Character->GetCurrentSplinePoint();
+		Character->CancelMoveTo();
 	}
 	Rewinding = true;
 	Character->IsRewinding = true;
@@ -60,6 +63,16 @@ void UPawnRewindComponent::StopRewind()
 	{
 		Character->GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
 		Character->GetCharacterMovement()->Velocity = CurrentSavePoint.Velocity;
+		Character->SetCurrentSplinePoint(CurrentSavePoint.CurrentSplinePoint);
+		if(CurrentSavePoint.TimerDelay <= 0.f)
+		{
+			GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Suposed to move to next point");
+			Character->MoveToCheckpoint();
+		}else
+		{
+			GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Suposed to Be idle for" + FString::SanitizeFloat(CurrentSavePoint.TimerDelay));
+			Character->StartNextPointTimer(CurrentSavePoint.TimerDelay);
+		}
 	}
 	CurrentSavePoint.Velocity = FVector::ZeroVector;
 	LastReachedSavePoint = -1;
@@ -92,7 +105,10 @@ void UPawnRewindComponent::Rewind(float DeltaTime)
 	FTransform RewindTransform;
 	RewindTransform.Blend(Capsule->GetComponentTransform(), TargetedSavePoint.Transform, Alpha);
 	FVector Velocity = FMath::Lerp<FVector>(CurrentSavePoint.Velocity, TargetedSavePoint.Velocity, Alpha);
+	float TimerDelay = FMath::Lerp<float>(CurrentSavePoint.TimerDelay, TargetedSavePoint.TimerDelay, Alpha);
 	CurrentSavePoint.Velocity = Velocity;
+	CurrentSavePoint.TimerDelay = TimerDelay;
+	CurrentSavePoint.CurrentSplinePoint = TargetedSavePoint.CurrentSplinePoint; 
 	Capsule->SetWorldTransform(RewindTransform);
 
 	if (Alpha >= 1.0f)
@@ -124,6 +140,8 @@ void UPawnRewindComponent::Record(float DeltaTime)
 		FPawnSavePoint SavePoint;
 		SavePoint.Velocity = Character->GetCharacterMovement()->Velocity;
 		SavePoint.Transform = Transform;
+		SavePoint.CurrentSplinePoint = Character->GetCurrentSplinePoint();
+		SavePoint.TimerDelay = Character->GetWorldTimerManager().GetTimerRemaining(Character->GetTimer());
 		SavePoints.Add(SavePoint);
 		NotSaveSince = 0.f;
 	}else
