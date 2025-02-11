@@ -2,7 +2,8 @@
 
 
 #include "EnemyCharacter.h"
-
+#include "AIController.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Rewind/Component/PawnRewindComponent.h"
 
 // Sets default values
@@ -12,6 +13,14 @@ AEnemyCharacter::AEnemyCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	PawnRewindComponent = CreateDefaultSubobject<UPawnRewindComponent>(TEXT("PawnRewindComponent"));
+
+	Rifle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rifle"));
+	Rifle->SetupAttachment(GetMesh(), TEXT("Weapon"));
+	
+	Mag = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mag"));
+	Mag->SetupAttachment(Rifle);
+
+	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("SPline"));
 
 }
 
@@ -25,13 +34,17 @@ void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AI = Cast<AAIController>(GetController());
+	GetController()->UnPossess();
+
+	AI = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(),GetActorLocation(),GetActorRotation());
+	AI->Possess(this);
+	
 	Player = Cast<ARewindCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	
 	if (AI &&  Player)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Red, "Player Movement");
-		AI->MoveToActor(Player);
+		AI->MoveToLocation(Spline->GetLocationAtSplinePoint(0,ESplineCoordinateSpace::World), 50.F);
+		AI->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &AEnemyCharacter::OnSPlinePointReach);
 	}
 	
 }
@@ -48,5 +61,20 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AEnemyCharacter::OnSPlinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result)
+{
+	if(CurrentSplinePoint < Spline->GetNumberOfSplinePoints() - 1)
+	{
+		CurrentSplinePoint++;
+	}
+	else
+	{
+		CurrentSplinePoint = 0;
+	}
+	AI->MoveToLocation(Spline->GetLocationAtSplinePoint(CurrentSplinePoint,ESplineCoordinateSpace::World));
+	bool Loop = Spline->IsClosedLoop();
+	
 }
 

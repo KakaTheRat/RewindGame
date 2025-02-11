@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "Rewind/RewindCharacter.h"
 #include "AIController.h"
+#include "AI/Navigation/NavigationTypes.h"
+#include "Components/SplineComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnemyCharacter.generated.h"
 
@@ -41,6 +44,17 @@ public:
 private:
 	ARewindCharacter* Player;
 	AAIController* AI;
+	
 	UPawnRewindComponent* PawnRewindComponent;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
+	USplineComponent* Spline;
+	int CurrentSplinePoint = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
+	UStaticMeshComponent* Rifle;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
+	UStaticMeshComponent* Mag;
+
+	void OnSPlinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result);
 };
