@@ -3,6 +3,7 @@
 
 #include "EnemyCharacter.h"
 #include "AIController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Rewind/Component/PawnRewindComponent.h"
 
@@ -21,7 +22,7 @@ AEnemyCharacter::AEnemyCharacter()
 	Mag->SetupAttachment(Rifle);
 
 	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("SPline"));
-
+	
 }
 
 FVector AEnemyCharacter::GetRewindVelocity()
@@ -43,9 +44,14 @@ void AEnemyCharacter::BeginPlay()
 	
 	if (AI &&  Player)
 	{
-		AI->MoveToLocation(Spline->GetLocationAtSplinePoint(0,ESplineCoordinateSpace::World), 50.F);
-		AI->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &AEnemyCharacter::OnSPlinePointReach);
+		AI->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &AEnemyCharacter::OnSplinePointReach);
+		MoveToCheckpoint();
 	}
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
 	
 }
 
@@ -63,7 +69,7 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 }
 
-void AEnemyCharacter::OnSPlinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result)
+void AEnemyCharacter::OnSplinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result)
 {
 	if(CurrentSplinePoint < Spline->GetNumberOfSplinePoints() - 1)
 	{
@@ -73,8 +79,18 @@ void AEnemyCharacter::OnSPlinePointReach(FAIRequestID RequestId, const FPathFoll
 	{
 		CurrentSplinePoint = 0;
 	}
-	AI->MoveToLocation(Spline->GetLocationAtSplinePoint(CurrentSplinePoint,ESplineCoordinateSpace::World));
-	bool Loop = Spline->IsClosedLoop();
-	
+	if(Spline->IsClosedLoop())
+	{
+		MoveToCheckpoint();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(MoveToCheckpointTimerHandle, this, &ThisClass::MoveToCheckpoint, 5.0f, false);
+	}
 }
 
+void AEnemyCharacter::MoveToCheckpoint()
+{
+	AI->MoveToLocation(Spline->GetLocationAtSplinePoint(CurrentSplinePoint,ESplineCoordinateSpace::World));
+
+}

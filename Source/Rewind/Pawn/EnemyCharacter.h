@@ -41,6 +41,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	int CurrentSplinePoint = 1;
+
+
 private:
 	ARewindCharacter* Player;
 	AAIController* AI;
@@ -49,12 +52,14 @@ private:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
 	USplineComponent* Spline;
-	int CurrentSplinePoint = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
 	UStaticMeshComponent* Rifle;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
 	UStaticMeshComponent* Mag;
 
-	void OnSPlinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result);
+	void OnSplinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result);
+	void MoveToCheckpoint();
+
+	FTimerHandle MoveToCheckpointTimerHandle;
 };
