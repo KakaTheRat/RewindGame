@@ -3,8 +3,13 @@
 
 #include "EnemyCharacter.h"
 #include "AIController.h"
+#include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "Rewind/Component/PawnRewindComponent.h"
 
 // Sets default values
@@ -15,14 +20,28 @@ AEnemyCharacter::AEnemyCharacter()
 
 	PawnRewindComponent = CreateDefaultSubobject<UPawnRewindComponent>(TEXT("PawnRewindComponent"));
 
-	Rifle = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rifle"));
-	Rifle->SetupAttachment(GetMesh(), TEXT("Weapon"));
+	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon"));
+	Weapon->SetupAttachment(GetMesh(),"RightHand");
 	
-	Mag = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mag"));
-	Mag->SetupAttachment(Rifle);
-
 	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("SPline"));
+
+	AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
+	if (UAISenseConfig_Sight* SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig")))
+	{
+		SightConfig->DetectionByAffiliation.bDetectEnemies = false;
+		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+		AIPerception->ConfigureSense(*SightConfig);
+		AIPerception->SetDominantSense(SightConfig->GetSenseImplementation());
+	}
+
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	
+}
+
+void AEnemyCharacter::ChangePerceptionStatus(bool Activated)
+{
+	AIPerception->SetSenseEnabled(AIPerception->GetDominantSense(), Activated);
 }
 
 FVector AEnemyCharacter::GetRewindVelocity()
@@ -42,7 +61,7 @@ void AEnemyCharacter::BeginPlay()
 	
 	Player = Cast<ARewindCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	
-	if (AI &&  Player)
+	if (AI)
 	{
 		AI->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &AEnemyCharacter::OnSplinePointReach);
 		MoveToCheckpoint();
@@ -51,6 +70,13 @@ void AEnemyCharacter::BeginPlay()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+	if(AIPerception)
+	{
+		AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyCharacter::OnPerceptionUpdated);
+	}
+
+	FollowCamera->Deactivate();
 	
 }
 
@@ -58,9 +84,19 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(PlayerSeen)
+	{
+		CancelMoveTo();
+		LookAtActor(Player);
+	}
+
+	if(Weapon)
+	{
+		tWeaponSocket = Weapon->GetBoneTransform(TEXT("HandSocket"));
+	}
+	
 }
 
-// Called to bind functionality to input
 void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -68,7 +104,6 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void AEnemyCharacter::CancelMoveTo()
 {
-	GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Cancel Move");
 	AI->StopMovement();
 }
 
@@ -78,13 +113,60 @@ void AEnemyCharacter::OnSplinePointReach(FAIRequestID RequestId, const FPathFoll
 	{
 		if(CurrentSplinePoint < Spline->GetNumberOfSplinePoints() - 1) {CurrentSplinePoint++;}
 		else {CurrentSplinePoint = 0;}
+		if(Spline->IsClosedLoop()) {MoveToCheckpoint();}
+		else {StartNextPointTimer(5.f);}
+	}else
+	{
+		MoveToCheckpoint();
 	}
-	if(Spline->IsClosedLoop()) {MoveToCheckpoint();}
-	else {StartNextPointTimer(5.f);}
 }
+
+void AEnemyCharacter::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	if(ARewindCharacter* DetectedPlayer = Cast<ARewindCharacter>(Actor))
+	{
+		if(Stimulus.IsValid())
+		{
+			CancelMoveTo();
+			MoveToCheckpointTimerHandle.Invalidate();
+			DetectedPlayer->DisableInputs();
+			PlayerSeen = true;
+			DetectedPlayer->Catched(this);
+			GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &ThisClass::RestartGame, 1.5, false);
+		}
+		
+	}
+}
+
+void AEnemyCharacter::LookAtActor(AActor* Actor)
+{
+	FVector ToTarget = Actor->GetTargetLocation() - Weapon->GetBoneTransform("Canon").GetLocation();
+	FRotator LookAtRotation =  FRotator(0.f, ToTarget.Rotation().Yaw, 0.f);
+	GetCapsuleComponent()->SetWorldRotation(
+		FMath::RInterpTo(
+		GetCapsuleComponent()->GetComponentRotation(),
+		LookAtRotation,
+		UGameplayStatics::GetWorldDeltaSeconds(this),
+		10));
+
+	FRotator TargetShoulderRotation = (Player->GetTargetLocation() - Weapon->GetBoneTransform(TEXT("Canon")).GetLocation()).Rotation();
+	TargetShoulderRotation = -1 * FRotator(0.f, 0.f, TargetShoulderRotation.Pitch);
+	ShoulderRotationOffset = FMath::RInterpTo(
+		ShoulderRotationOffset,
+		TargetShoulderRotation,
+		UGameplayStatics::GetWorldDeltaSeconds(this),
+		10);
+}
+
+void AEnemyCharacter::RestartGame()
+{
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+}
+
 
 void AEnemyCharacter::MoveToCheckpoint()
 {
+	if(PlayerSeen){return;}
 	AI->MoveToLocation(Spline->GetLocationAtSplinePoint(CurrentSplinePoint,ESplineCoordinateSpace::World));
 }
 

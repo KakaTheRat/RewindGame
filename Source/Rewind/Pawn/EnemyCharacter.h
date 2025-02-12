@@ -3,15 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Rewind/RewindCharacter.h"
 #include "AIController.h"
 #include "AI/Navigation/NavigationTypes.h"
 #include "Components/SplineComponent.h"
-#include "Navigation/PathFollowingComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/Controller.h"
+#include "Navigation/PathFollowingComponent.h"
+#include "Perception/AIPerceptionTypes.h"
+#include "Rewind/RewindCharacter.h"
 #include "EnemyCharacter.generated.h"
 
+class UAISenseConfig_Sight;
 class UPawnRewindComponent;
 class AAIController;
 
@@ -26,6 +28,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Animation")
 	bool IsRewinding = false;
 
+	void ChangePerceptionStatus(bool Activated);
+	
 	UFUNCTION(BlueprintCallable)
 	FVector GetRewindVelocity();
 	
@@ -44,7 +48,17 @@ public:
 	FORCEINLINE int GetCurrentSplinePoint() const {return CurrentSplinePoint;}
 	FORCEINLINE void SetCurrentSplinePoint(const int SplinePoint) {CurrentSplinePoint = SplinePoint;}
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetPlayerSeen() const {return PlayerSeen;}
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE FTransform GetWeaponSocketTransform() const {return tWeaponSocket;}
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE FRotator GetShoulderOffsetRotation() {return ShoulderRotationOffset;}
+
 	FORCEINLINE FTimerHandle GetTimer() const {return MoveToCheckpointTimerHandle ;}
+
+	FORCEINLINE UCameraComponent* GetCamera() const {return FollowCamera;}
 
 	void MoveToCheckpoint();
 	void StartNextPointTimer(float Delay);
@@ -60,12 +74,30 @@ private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
 	USplineComponent* Spline;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
-	UStaticMeshComponent* Rifle;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Spline", Meta = (AllowPrivateAccess))
-	UStaticMeshComponent* Mag;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AI Sense", Meta = (AllowPrivateAccess))
+	UAIPerceptionComponent* AIPerception;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Weapon", Meta = (AllowPrivateAccess))
+	USkeletalMeshComponent* Weapon;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* FollowCamera;
+
+	
+	FTransform tWeaponSocket;
+	FRotator ShoulderRotationOffset;
 
 	void OnSplinePointReach(FAIRequestID RequestId, const FPathFollowingResult& Result);
+	UFUNCTION()
+	void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
 	int CurrentSplinePoint = 1;
+	
 	FTimerHandle MoveToCheckpointTimerHandle;
+	FTimerHandle ShootTimerHandle;
+
+	void LookAtActor(AActor* Actor);
+	bool PlayerSeen = false;
+
+	void RestartGame();
 };

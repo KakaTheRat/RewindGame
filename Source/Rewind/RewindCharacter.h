@@ -51,9 +51,12 @@ class ARewindCharacter : public ACharacter
 public:
 	ARewindCharacter();
 	bool CanMove = true;
+	void DisableInputs();
 	
 
 protected:
+
+	void Tick(float DeltaSeconds) override;
 
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -76,6 +79,12 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	void Catched(AActor* CatchedBy);
+private:
+	bool Catch = false;
+	AActor* Catcher;
+	void ChangeCamSmoothly(AActor* Actor);
 	
 };
 

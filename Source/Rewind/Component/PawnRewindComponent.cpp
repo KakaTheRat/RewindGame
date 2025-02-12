@@ -52,6 +52,7 @@ void UPawnRewindComponent::StartRewind()
 		Character->CancelMoveTo();
 	}
 	Rewinding = true;
+	Character->ChangePerceptionStatus(false);
 	Character->IsRewinding = true;
 }
 
@@ -77,6 +78,7 @@ void UPawnRewindComponent::StopRewind()
 	CurrentSavePoint.Velocity = FVector::ZeroVector;
 	LastReachedSavePoint = -1;
 	RewindCurentTime = 0.f;
+	Character->ChangePerceptionStatus(true);
 }
 
 void UPawnRewindComponent::Rewind(float DeltaTime)
@@ -141,7 +143,7 @@ void UPawnRewindComponent::Record(float DeltaTime)
 		SavePoint.Velocity = Character->GetCharacterMovement()->Velocity;
 		SavePoint.Transform = Transform;
 		SavePoint.CurrentSplinePoint = Character->GetCurrentSplinePoint();
-		SavePoint.TimerDelay = Character->GetWorldTimerManager().GetTimerRemaining(Character->GetTimer());
+		SavePoint.TimerDelay = FMath::Clamp<float>(Character->GetWorldTimerManager().GetTimerRemaining(Character->GetTimer()), 0,5);
 		SavePoints.Add(SavePoint);
 		NotSaveSince = 0.f;
 	}else

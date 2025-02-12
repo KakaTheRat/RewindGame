@@ -14,6 +14,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "RewindGameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "Pawn/EnemyCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -22,6 +24,7 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ARewindCharacter::ARewindCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
@@ -59,7 +62,25 @@ void ARewindCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-	
+}
+
+void ARewindCharacter::Catched(AActor* CatchedBy)
+{
+	Catch = true;
+	Catcher = CatchedBy;
+	ChangeCamSmoothly(Catcher);	
+}
+
+void ARewindCharacter::ChangeCamSmoothly(AActor* Actor)
+{
+	if(AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(Actor))
+	{
+		Enemy->GetCamera()->Activate();
+	}
+	if(APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		PlayerController->SetViewTargetWithBlend(Actor, 1.F);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -100,6 +121,22 @@ void ARewindCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void ARewindCharacter::DisableInputs()
+{
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->ClearAllMappings();
+		}
+	}
+}
+
+void ARewindCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }
 
 void ARewindCharacter::Move(const FInputActionValue& Value)
