@@ -7,7 +7,7 @@
 #include "AI/Navigation/NavigationTypes.h"
 #include "Components/SplineComponent.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/Controller.h"
+#include "NiagaraComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "Rewind/RewindCharacter.h"
@@ -60,6 +60,8 @@ public:
 
 	FORCEINLINE UCameraComponent* GetCamera() const {return FollowCamera;}
 
+	FORCEINLINE void ChangeNiagaraActivation(bool bActivate){if(bActivate){RewindNiagara->Activate();}else{RewindNiagara->Deactivate();}}
+
 	void MoveToCheckpoint();
 	void StartNextPointTimer(float Delay);
 	void CancelMoveTo();
@@ -83,6 +85,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UNiagaraComponent* RewindNiagara;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UNiagaraComponent* ShootNiagara;
 	
 	FTransform tWeaponSocket;
 	FRotator ShoulderRotationOffset;
@@ -95,9 +102,11 @@ private:
 	
 	FTimerHandle MoveToCheckpointTimerHandle;
 	FTimerHandle ShootTimerHandle;
+	FTimerHandle EndGameTimer;
 
 	void LookAtActor(AActor* Actor);
 	bool PlayerSeen = false;
 
-	void RestartGame();
+	void Shoot();
+	void CallBlackScreen();
 };

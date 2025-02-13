@@ -10,6 +10,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "Rewind/RewindGameMode.h"
 #include "Rewind/Component/PawnRewindComponent.h"
 
 // Sets default values
@@ -36,6 +37,15 @@ AEnemyCharacter::AEnemyCharacter()
 	}
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+
+	RewindNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Rewind Niagara"));
+	RewindNiagara->SetupAttachment(GetMesh());
+	RewindNiagara->bAutoActivate = false;
+
+	ShootNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Shoot Niagara"));
+	ShootNiagara->SetupAttachment(Weapon,TEXT("Canon"));
+	ShootNiagara->bAutoActivate = false;
+	ShootNiagara->SetRelativeRotation(FRotator(0.f,0.f,-90.f));
 	
 }
 
@@ -132,7 +142,7 @@ void AEnemyCharacter::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 			DetectedPlayer->DisableInputs();
 			PlayerSeen = true;
 			DetectedPlayer->Catched(this);
-			GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &ThisClass::RestartGame, 1.5, false);
+			GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &ThisClass::Shoot, 1.5, false);
 		}
 		
 	}
@@ -158,9 +168,16 @@ void AEnemyCharacter::LookAtActor(AActor* Actor)
 		10);
 }
 
-void AEnemyCharacter::RestartGame()
+void AEnemyCharacter::Shoot()
 {
-	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+	GetWorld()->GetWorldSettings()->SetTimeDilation(0.1);
+	ShootNiagara->ActivateSystem();
+	CallBlackScreen();
+}
+
+void AEnemyCharacter::CallBlackScreen()
+{
+	Player->BlackScreen();
 }
 
 

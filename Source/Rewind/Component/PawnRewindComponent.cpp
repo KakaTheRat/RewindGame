@@ -54,6 +54,7 @@ void UPawnRewindComponent::StartRewind()
 	Rewinding = true;
 	Character->ChangePerceptionStatus(false);
 	Character->IsRewinding = true;
+	Character->ChangeNiagaraActivation(true);
 }
 
 void UPawnRewindComponent::StopRewind()
@@ -79,6 +80,8 @@ void UPawnRewindComponent::StopRewind()
 	LastReachedSavePoint = -1;
 	RewindCurentTime = 0.f;
 	Character->ChangePerceptionStatus(true);
+	Character->ChangeNiagaraActivation(false);
+
 }
 
 void UPawnRewindComponent::Rewind(float DeltaTime)

@@ -79,12 +79,25 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void EnableInputs() {SetupPlayerInputComponent(InputComponent);}
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool IsCatched() {return Catch;}
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetDoRewindAnim() {return DoRewindAnim;}
+	
 	void Catched(AActor* CatchedBy);
+	void BlackScreen();
 private:
 	bool Catch = false;
 	AActor* Catcher;
 	void ChangeCamSmoothly(AActor* Actor);
-	
+	void LookAtCatcher();
+	bool DoRewindAnim = false;
+	FTimerHandle RewindAnimTimer;
+	FTimerHandle RestartGameTimer;
+	FORCEINLINE void StartRewindAnim() {DoRewindAnim = true;}
+	void EndGame();
 };
 

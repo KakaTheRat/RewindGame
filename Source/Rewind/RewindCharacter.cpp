@@ -62,13 +62,15 @@ void ARewindCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+	DisableInputs();
 }
 
 void ARewindCharacter::Catched(AActor* CatchedBy)
 {
 	Catch = true;
 	Catcher = CatchedBy;
-	ChangeCamSmoothly(Catcher);	
+	ChangeCamSmoothly(Catcher);
+	GetWorldTimerManager().SetTimer(RestartGameTimer, this, &ThisClass::StartRewindAnim, 1.48, false);
 }
 
 void ARewindCharacter::ChangeCamSmoothly(AActor* Actor)
@@ -80,6 +82,36 @@ void ARewindCharacter::ChangeCamSmoothly(AActor* Actor)
 	if(APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		PlayerController->SetViewTargetWithBlend(Actor, 1.F);
+	}
+}
+
+void ARewindCharacter::LookAtCatcher()
+{
+	if(!Catcher) {return;}
+	FVector ToTarget = Catcher->GetTargetLocation() - GetCapsuleComponent()->GetComponentLocation();
+	FRotator LookAtRotation =  FRotator(0.f, ToTarget.Rotation().Yaw, 0.f);
+	GetCapsuleComponent()->SetWorldRotation(
+		FMath::RInterpTo(
+		GetCapsuleComponent()->GetComponentRotation(),
+		LookAtRotation,
+		UGameplayStatics::GetWorldDeltaSeconds(this),
+		10));
+}
+
+void ARewindCharacter::EndGame()
+{
+	UGameplayStatics::OpenLevel(this, FName(GetWorld()->GetMapName()));
+}
+
+void ARewindCharacter::BlackScreen()
+{
+	if(APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		if(APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager)
+		{
+			CameraManager->StartCameraFade(0.f, 1.f, 0.3f, FColor::Black, false, true);
+			GetWorldTimerManager().SetTimer(RestartGameTimer, this, &ThisClass::EndGame, 0.3f, false);
+		}
 	}
 }
 
@@ -137,6 +169,10 @@ void ARewindCharacter::DisableInputs()
 void ARewindCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if(Catcher && Catch)
+	{
+		LookAtCatcher();
+	}
 }
 
 void ARewindCharacter::Move(const FInputActionValue& Value)

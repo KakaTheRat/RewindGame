@@ -20,6 +20,7 @@ void ARewindGameMode::StartGlobalRewind()
 	Rewinding = true;
 	Player->CanMove= false;
 	OnGlobalRewindStarted.Broadcast();
+	PostProcess->bEnabled = true;
 }
 
 void ARewindGameMode::EndGlobalRewind()
@@ -27,6 +28,7 @@ void ARewindGameMode::EndGlobalRewind()
 	Rewinding = false;
 	Player->CanMove= true;
 	OnGlobalRewindEnded.Broadcast();
+	PostProcess->bEnabled = false;
 }
 
 void ARewindGameMode::BeginPlay()
@@ -38,16 +40,4 @@ void ARewindGameMode::BeginPlay()
 void ARewindGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	if (Rewinding)
-	{
-		RemainingRewindTime = FMath::Clamp<float>(RemainingRewindTime - (DeltaSeconds * RewindSpeed), 0.0f, RecordMaxTime);
-		if (RemainingRewindTime <= 0)
-		{
-			EndGlobalRewind();
-		}
-	}else
-	{
-		RemainingRewindTime = FMath::Clamp<float>(RemainingRewindTime + DeltaSeconds, 0.0f, RecordMaxTime);
-	}
 }
