@@ -90,6 +90,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UNiagaraComponent* ShootNiagara;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	USoundBase* ShootSound;
 	
 	FTransform tWeaponSocket;
 	FRotator ShoulderRotationOffset;

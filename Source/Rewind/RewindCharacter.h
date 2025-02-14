@@ -15,6 +15,7 @@ class UInputAction;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerInteracted);
 
 UCLASS(config=Game)
 class ARewindCharacter : public ACharacter
@@ -48,11 +49,14 @@ class ARewindCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* RewindAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InterractAction;
+
 public:
 	ARewindCharacter();
 	bool CanMove = true;
 	void DisableInputs();
-	
+	FOnPlayerInteracted OnPlayerInteracted;
 
 protected:
 
@@ -65,6 +69,9 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	void Jump() override;
+
+	void Interact();
+	
 			
 
 protected:

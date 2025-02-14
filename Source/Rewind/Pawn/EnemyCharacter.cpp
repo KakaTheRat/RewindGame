@@ -172,6 +172,7 @@ void AEnemyCharacter::Shoot()
 {
 	GetWorld()->GetWorldSettings()->SetTimeDilation(0.1);
 	ShootNiagara->ActivateSystem();
+	UGameplayStatics::PlaySoundAtLocation(this, ShootSound, Weapon->GetBoneLocation(TEXT("Canon")));
 	CallBlackScreen();
 }
 

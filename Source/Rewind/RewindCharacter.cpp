@@ -133,14 +133,16 @@ void ARewindCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ARewindCharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ARewindCharacter::Jump);
+		//	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARewindCharacter::Move);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARewindCharacter::Look);
+
+		EnhancedInputComponent->BindAction(InterractAction, ETriggerEvent::Triggered, this, &ARewindCharacter::Interact);
 
 		//Rewind
 		if (ARewindGameMode* RewindGameMode = Cast<ARewindGameMode>(GetWorld()->GetAuthGameMode()))
@@ -216,4 +218,9 @@ void ARewindCharacter::Jump()
 {
 	if (!CanMove){return;}
 	Super::Jump();
+}
+
+void ARewindCharacter::Interact()
+{
+	OnPlayerInteracted.Broadcast();
 }
