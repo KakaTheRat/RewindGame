@@ -10,7 +10,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "Rewind/RewindGameMode.h"
+#include "../GameMode/RewindGameMode.h"
 #include "Rewind/Component/PawnRewindComponent.h"
 
 // Sets default values
@@ -37,6 +37,7 @@ AEnemyCharacter::AEnemyCharacter()
 	}
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(GetMesh());
 
 	RewindNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Rewind Niagara"));
 	RewindNiagara->SetupAttachment(GetMesh());

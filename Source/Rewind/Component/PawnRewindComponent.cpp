@@ -8,7 +8,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Rewind/RewindGameMode.h"
+#include "../GameMode/RewindGameMode.h"
 
 // Sets default values for this component's properties
 UPawnRewindComponent::UPawnRewindComponent()
@@ -68,11 +68,9 @@ void UPawnRewindComponent::StopRewind()
 		Character->SetCurrentSplinePoint(CurrentSavePoint.CurrentSplinePoint);
 		if(CurrentSavePoint.TimerDelay <= 0.f)
 		{
-			GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Suposed to move to next point");
 			Character->MoveToCheckpoint();
 		}else
 		{
-			GEngine->AddOnScreenDebugMessage(-1,5,FColor::Black,"Suposed to Be idle for" + FString::SanitizeFloat(CurrentSavePoint.TimerDelay));
 			Character->StartNextPointTimer(CurrentSavePoint.TimerDelay);
 		}
 	}

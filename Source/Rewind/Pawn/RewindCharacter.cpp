@@ -13,9 +13,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "RewindGameMode.h"
+#include "../GameMode/RewindGameMode.h"
+#include "Components/PostProcessComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Pawn/EnemyCharacter.h"
+#include "../Pawn/EnemyCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -56,6 +57,12 @@ ARewindCharacter::ARewindCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	RewindPostProcess = CreateDefaultSubobject<UPostProcessComponent>(TEXT("RewindPostProcess"));
+	RewindPostProcess->bEnabled = false;
+
+	XRayPostProcess = CreateDefaultSubobject<UPostProcessComponent>(TEXT("XRayPostProcess"));
+	XRayPostProcess->bEnabled = false;
 }
 
 void ARewindCharacter::BeginPlay()
@@ -63,6 +70,11 @@ void ARewindCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 	DisableInputs();
+}
+
+void ARewindCharacter::LewerTurnedOn()
+{
+	LewerOn += 1;
 }
 
 void ARewindCharacter::Catched(AActor* CatchedBy)
@@ -150,6 +162,9 @@ void ARewindCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			EnhancedInputComponent->BindAction(RewindAction, ETriggerEvent::Started, RewindGameMode, &ARewindGameMode::StartGlobalRewind);
 			EnhancedInputComponent->BindAction(RewindAction, ETriggerEvent::Completed, RewindGameMode, &ARewindGameMode::EndGlobalRewind);
 		}
+		
+		EnhancedInputComponent->BindAction(XRayAction, ETriggerEvent::Started, this, &ThisClass::StartXRay);
+		EnhancedInputComponent->BindAction(XRayAction, ETriggerEvent::Completed, this, &ThisClass::StropXray);
 	}
 	else
 	{

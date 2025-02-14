@@ -29,7 +29,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE void SetWidget(UWidgetComponent* Widget) {InteractableWidget = Widget;}
+	void SetWidget(UWidgetComponent* Widget);
 	UFUNCTION(BlueprintCallable)
 	void SetBox(UBoxComponent* Box);
 

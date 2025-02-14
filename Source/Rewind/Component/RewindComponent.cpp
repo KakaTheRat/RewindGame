@@ -2,7 +2,7 @@
 
 
 #include "RewindComponent.h"
-#include "Rewind/RewindGameMode.h"
+#include "Rewind/GameMode/RewindGameMode.h"
 #include "TimerManager.h"
 #include "Components/StaticMeshComponent.h"
 

@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/PostProcessComponent.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "RewindCharacter.generated.h"
 
+class UPostProcessComponent;
 class ARewindGameMode;
 class USpringArmComponent;
 class UCameraComponent;
@@ -52,6 +54,9 @@ class ARewindCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* InterractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* XRayAction;
+
 public:
 	ARewindCharacter();
 	bool CanMove = true;
@@ -71,8 +76,9 @@ protected:
 	void Jump() override;
 
 	void Interact();
-	
-			
+
+	FORCEINLINE void StartXRay() {XRayPostProcess->bEnabled = true;};
+	FORCEINLINE void StropXray() {XRayPostProcess->bEnabled = false;}
 
 protected:
 	// APawn interface
@@ -93,6 +99,12 @@ public:
 	FORCEINLINE bool IsCatched() {return Catch;}
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool GetDoRewindAnim() {return DoRewindAnim;}
+	UFUNCTION(BlueprintCallable)
+	void LewerTurnedOn();
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE int GetActivatedLewer() {return LewerOn;}
+
+	FORCEINLINE void SetRewindPostProcessActivation(bool bActivated) const {RewindPostProcess->bEnabled = bActivated;}
 	
 	void Catched(AActor* CatchedBy);
 	void BlackScreen();
@@ -106,5 +118,13 @@ private:
 	FTimerHandle RestartGameTimer;
 	FORCEINLINE void StartRewindAnim() {DoRewindAnim = true;}
 	void EndGame();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PostProcess", meta = (AllowPrivateAccess = "true"))
+	UPostProcessComponent* RewindPostProcess;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PostProcess", meta = (AllowPrivateAccess = "true"))
+	UPostProcessComponent* XRayPostProcess;
+
+	int LewerOn = 0;
+	
 };
 

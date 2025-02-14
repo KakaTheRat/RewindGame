@@ -22,12 +22,13 @@ public:
 	void StartGlobalRewind();
 	UFUNCTION(BlueprintCallable)
 	void EndGlobalRewind();
+
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE void SetPostProcessVolume(APostProcessVolume* PostProcessVolume) {PostProcess = PostProcessVolume;}
+	FORCEINLINE ARewindCharacter* GetPlayer() {return Player;};
 	
 	FOnGlobalRewindStarted OnGlobalRewindStarted;
 	FOnGlobalRewindEnded OnGlobalRewindEnded;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind")
 	bool Rewinding = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewind")
@@ -39,13 +40,14 @@ public:
 	float SavePointPerSecond = 60.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Rewind", Meta = (AllowPrivateAccess))
 	bool ShowTimeLine = false;
+
+	UFUNCTION(BlueprintCallable)
+	void EndGame();
 private:
 	ARewindCharacter* Player;
+	
 
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
-
-	APostProcessVolume* PostProcess;
-	
 };

@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "RewindGameMode.h"
-#include "RewindCharacter.h"
+#include "../Pawn/RewindCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 ARewindGameMode::ARewindGameMode()
@@ -20,7 +20,7 @@ void ARewindGameMode::StartGlobalRewind()
 	Rewinding = true;
 	Player->CanMove= false;
 	OnGlobalRewindStarted.Broadcast();
-	PostProcess->bEnabled = true;
+	Player->SetRewindPostProcessActivation(true);
 }
 
 void ARewindGameMode::EndGlobalRewind()
@@ -28,7 +28,13 @@ void ARewindGameMode::EndGlobalRewind()
 	Rewinding = false;
 	Player->CanMove= true;
 	OnGlobalRewindEnded.Broadcast();
-	PostProcess->bEnabled = false;
+	Player->SetRewindPostProcessActivation(false);
+
+}
+
+void ARewindGameMode::EndGame()
+{
+	Player->BlackScreen();
 }
 
 void ARewindGameMode::BeginPlay()

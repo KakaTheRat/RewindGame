@@ -10,7 +10,7 @@
 #include "NiagaraComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Rewind/RewindCharacter.h"
+#include "RewindCharacter.h"
 #include "EnemyCharacter.generated.h"
 
 class UAISenseConfig_Sight;
